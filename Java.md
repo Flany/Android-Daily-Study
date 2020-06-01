@@ -334,11 +334,11 @@ Thread thread2 = new Thread(thread2Runnable);
 thread2.start();
 ```
 
-3.实现Callable接口，AsyncTask的实现就是通过这个方法。
+3.实现Callable接口，AsyncTask的实现就是通过这个方法
 
 ```java
 /**
- * 方式3，这个不是一个线程
+ * 方式3，这个不是一个线程，这个并不是，FutureTask是实现了Runnable
  */
 static class Thread3Callable implements Callable<String> {
 
@@ -357,13 +357,128 @@ String result = futureTask.get();
 
 ## **线程的关闭**
 
-线程要和谐的停止，不能粗暴停止。
+- 线程的关闭是一种协作机制，发出信号，线程得知信号然后自己来终止；
+
+- 线程要和谐的停止，不能粗暴停止；
+
 
 - stop方法，太粗暴了，会造成很多问题，比如资源未释放等等，尽量不要使用；
+- interrupt和isInterrupt方法，interrupt发出信号，告知线程可以停止了，线程通过isInterrupt方法得知信息，最后让run方法走完，自动停止；
+- 如果run中调用Thread.sleep()，会让取消interrupt发出的信号，并抛出一个异常，在try catch 可以调用Thread.currentThread().interrupt();再次发出中断信号。
 
-- interrupt和isInterrupt方法，interrupt发出信号，告知线程可以停止了，线程通过isInterrupt方法得知信息，最后让run方法走完，自动停止。
+## 线程的顺序
+
+使用join方法，让该线程先执行完。
+
+```java
+public class JoinTestThread {
+
+    static class JoinThread1 extends Thread {
+
+        private Thread thread;
+
+        public JoinThread1(String name, Thread thread) {
+            super(name);
+            this.thread = thread;
+        }
+
+        @Override
+        public void run() {
+            super.run();
+            System.out.println(getName() + " 开始运行。。。");
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println(thread.getName() + " 运行完毕。。。");
+
+            System.out.println(getName() + " 继续运行。。。");
+            for (int i = 0; i < 10; i++) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println(getName() + " is running");
+            }
+        }
+    }
+
+    static class JoinThread2 extends Thread {
+
+        private Thread thread;
+
+        public JoinThread2(String name, Thread thread) {
+            super(name);
+            this.thread = thread;
+        }
+
+        @Override
+        public void run() {
+            super.run();
+            System.out.println(getName() + " 开始运行。。。");
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println(thread.getName() + " 运行完毕。。。");
+
+            System.out.println(getName() + " 继续运行。。。");
+            for (int i = 0; i < 10; i++) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println(getName() + " is running");
+            }
+        }
+    }
+
+    static class JoinThread3 extends Thread {
+
+        public JoinThread3(String name) {
+            super(name);
+        }
+
+        @Override
+        public void run() {
+            super.run();
+            System.out.println(getName() + " 开始运行。。。");
+            for (int i = 0; i < 10; i++) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println(getName() + " is running");
+            }
+        }
+    }
+
+    /**
+     * joinThread3 joinThread2 joinThread1顺序执行
+     */
+    public static void main(String[] args) {
+        JoinThread3 joinThread3 = new JoinThread3("==张三==");
+        JoinThread2 joinThread2 = new JoinThread2("**李四**", joinThread3);
+        JoinThread1 joinThread1 = new JoinThread1("--王五--", joinThread2);
+        joinThread1.start();
+        joinThread2.start();
+        joinThread3.start();
+    }
+}
+```
+
+## 守护线程
 
 ## 锁的分类
+
+悲观锁：synchronized ，先拿到锁，总有其他线程来改我的数值
+
+乐观锁：类似CAS机制，保持好的心态，总以为没有线程来修改我的数值
 
 - **类锁**
 
@@ -441,6 +556,8 @@ String result = futureTask.get();
 
 ## ThreadLocal
 
+原理：Thread内部持有自己的TheadLocal的数组对象，为什么不用Map<Thread, 数据>呢，一个资源，会造成多个线程去竞争Map的锁。内部自己持有自己的，不会造成竞争，多个线程才会造成竞争。
+
 - 在线程中设置的属性，只在该线程内有用
 - 初始化时的属性，所有的线程可以共享使用
 
@@ -490,3 +607,53 @@ public class ThreadLocalTest {
     }
 }
 ```
+
+## 线程的状态/线程的生命周期
+
+​				等待(wait, join)  唤醒（notify, notifyAll）
+
+
+
+初始(new)  -->运行（start，CPU调度）-->就绪(yield()方法让出CPU执行权，内部或外部因素)----------终止
+
+
+
+​				等待超时（Thread.sleep(long time), wait(long time)，join(long time)）	唤醒（notify, notifyAll）
+
+​					
+
+​						阻塞（有且仅有synchronized可实现）Lock没有获取到锁的时候，是进入到等待或者等待超时状态
+
+​						阻塞会造成上下文切换，3-5ms  一个CPU指令0.6ns
+
+
+
+阻塞是被动进入；
+
+等待是主动进入，我没有获取到资源，主动进入等待状态。
+
+## 死锁
+
+- 多个线程M>=2   争夺N>=2个资源 M>=N
+- 争夺资源的顺序不对
+- 未拿到全部资源，之前的资源不释放
+
+专业术语：
+
+互斥条件：资源拿到后，只能独享
+
+请求保持：在请求其他资源的时候，没拿到，一直在请求，也不释放之前拿到的资源  
+
+不剥夺：资源不能被剥夺 
+
+环路等待：1.拿到A  想拿B;	2.拿到B，想拿A
+
+## CAS
+
+compare and swap  比较和交换   自旋   先计算 和预期的比较 如果和预期一样  就交换，如果不一样，就重新再来一次
+
+ABA问题 ：加入版本控制
+
+开销问题： 如果实在是太大了，采用加锁方法
+
+只能保证一个共享变量的原子操作： 将多个共享变量组合成一个对象来使用
