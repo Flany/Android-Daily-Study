@@ -96,9 +96,132 @@ public void test() {
 
 # 2、序列化
 
+如网络传输数据，跨进程传输数据时，需要将对象或者数据结构进行序列化成二进制
+
+## 方案
+
+json, xml, protobuf
+
+如何选择：通用性、强壮性、可调式性、可读性、可扩展性、安全性
+
 ## **Serializable**
 
+```java
+public class Person implements Serializable {
+    
+    //可以做一些版本控制，可以重写，序列化后，改变了，再反序列化回来就不行
+    private static final long serialVersionUID = 1L;
+    
+    private String name;
+    
+    private int age;
+
+    public Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    @Override
+    public String toString() {
+        return "Person{" +
+                "name='" + name + '\'' +
+                ", age=" + age +
+                '}';
+    }
+}
+```
+
 ## **Parcelable**
+
+## Externalizable
+
+```java
+/**
+ * @author Flany
+ * @since 2020/6/10
+ */
+public class Student implements Externalizable {
+
+    private static final long serialVersionUID = 2L;
+
+    private String name;
+    private int age;
+    private String grade;
+
+    //必须要有一个无参构造函数
+    public Student() {
+    }
+
+    public Student(String name, int age, String grade) {
+        this.name = name;
+        this.age = age;
+        this.grade = grade;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public String getGrade() {
+        return grade;
+    }
+
+    public void setGrade(String grade) {
+        this.grade = grade;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeObject("姓名：" + name);
+        out.writeInt(age + 100);
+        out.writeObject("年级：" + grade);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws ClassNotFoundException, IOException {
+        name = (String) in.readObject();
+        age = in.readInt();
+        grade = (String) in.readObject();
+    }
+
+    @Override
+    public String toString() {
+        return "Student{" +
+                "name='" + name + '\'' +
+                ", age=" + age +
+                ", grade='" + grade + '\'' +
+                '}';
+    }
+}
+```
 
 # 3、注解、反射和动态代理
 
@@ -106,7 +229,7 @@ public void test() {
 
 - **SOURCE**
 
-  源码级别保留，apt技术	例如：@Nonull等做一些IDE语法检查
+  源码级别保留，apt技术（annotation processor tool注解处理器）	例如：@Nonull等做一些IDE语法检查
 
 - **CLASS**		
 
@@ -115,6 +238,31 @@ public void test() {
 - **RUNTIME**
 
   保留至运行期，反射
+
+##   APT
+
+在javac编译的时候，会采集所有的注解信息，javac主动调用注解处理器程序来处理，一般用于生成额外的辅助类
+
+```java
+创建一个compiler的java工程
+
+创建一个文件    
+G:\android-code\CompilerTest\compiler\src\main\resources\META-INF\services\javax.annotation.processing.Processor
+    
+文件中写入：com.flany.compiler.FlanyProcessor    
+/**
+ * 指定处理那个注解
+ */
+@SupportedAnnotationTypes("com.flany.compiler.annotion.Flany")
+public class FlanyProcessor extends AbstractProcessor {
+    @Override
+    public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
+        Messager messager = processingEnv.getMessager();
+        messager.printMessage(Diagnostic.Kind.NOTE, "========================测试");
+        return false;
+    }
+}
+```
 
 ## 静态代理
 
@@ -316,7 +464,7 @@ static class Thread1 extends Thread {
 }
 ```
 
-2.实现Runnable接口
+2.实现Runnable接口，然后交给Thread运行
 
 ```java
 /**
@@ -474,11 +622,52 @@ public class JoinTestThread {
 
 ## 守护线程
 
+
+
 ## 锁的分类
 
-悲观锁：synchronized ，先拿到锁，总有其他线程来改我的数值
+- 悲观锁：synchronized ，先拿到锁，总有其他线程来改我的数值
 
-乐观锁：类似CAS机制，保持好的心态，总以为没有线程来修改我的数值
+
+- 乐观锁：类似CAS机制，保持好的心态，总以为没有线程来修改我的数值
+
+  
+
+- 阻塞锁：synchronized 
+
+- 非阻塞锁：类似CAS机制，自旋尝试拿锁
+
+  
+
+- 重入锁：synchronized，AQS等实现的重入锁，递归或者多个同步方法相互调用
+
+- 不可重入锁：
+
+  
+
+- 公平锁：先排队，在链表的最后面排队，不停地自旋，看链表的前一个节点是否释放锁
+
+- 非公平锁：先尝试去拿锁，拿不到再去排队
+
+  
+
+- 共享锁：读写锁中的读锁是共享的
+
+- 排它锁：写锁，和synchronized都是排他的
+
+  
+
+- 偏向锁：如果只有一个线程去拿锁或者总是同一个线程拿到锁，不用做CAS操作（第一次需要），直接获取锁
+
+- 自旋锁：防止上下文切换导致的资源浪费，采用自旋去尝试拿锁
+
+- 适应性自旋锁：自旋的次数有限制，自旋的时间不能超过上下文切换的时间
+
+- 轻量级锁：采用CAS操作来获取锁
+
+- 重量级锁：如果加锁的内容执行时间比较久，
+
+  
 
 - **类锁**
 
@@ -556,7 +745,26 @@ public class JoinTestThread {
 
 ## ThreadLocal
 
-原理：Thread内部持有自己的TheadLocal的数组对象，为什么不用Map<Thread, 数据>呢，一个资源，会造成多个线程去竞争Map的锁。内部自己持有自己的，不会造成竞争，多个线程才会造成竞争。
+原理：Thread内部持有自己的ThreadLocalMap的数组对象，数组对象存放的是该TheadLocal对象和TheadLocal设置的属性值。(Handler内部有用的TheadLocal)
+
+- 自己实现的TheadLocal
+
+```java
+//其他线程如果拿到当前线程的实例，是可以获取或者修改当前线程保存的数据
+//如果get和set方法不设置synchronized关键字，会导致set的值还没有设置成功，然后get为空
+public class MyThreadLocal<T> {
+
+    private Map<Thread, T> myThreadLocalMap = new HashMap<>();
+
+    public void set(Thread thread, T t) {
+        myThreadLocalMap.put(thread, t);
+    }
+
+    public T get(Thread thread) {
+        return myThreadLocalMap.get(thread);   
+    }
+}
+```
 
 - 在线程中设置的属性，只在该线程内有用
 - 初始化时的属性，所有的线程可以共享使用
@@ -610,6 +818,22 @@ public class ThreadLocalTest {
 
 ## 线程的状态/线程的生命周期
 
+- 初始化（new）：新建了一个线程，但是还没有调用start方法；
+
+- 运行（RUNNABLE）:java将运行状态分为就绪（reday）和运行中（running）；
+
+  新建一个线程后，调用start方法后，该线程就进入可运行线程池中，等待被线程调度选中，获取CPU的执行权，此时线程就处于就绪状态。就绪状态的线程在获取CPU时间片后变为运行中状态。
+
+- 阻塞（blocked）：线程阻塞于锁，线程想要获取锁，但是没有获取到，就处于阻塞状态，等待其他线程的唤醒；
+
+- 等待（waiting）：进入该状态的线程需要等待其他线程做出一些特定的动作（通知或者中断），才能回到运行状态；
+
+- 等待超时（timed_waiting）：该状态不同于等待状态（waiting），它可以在指定的时间后自行返回运行状态。
+
+- 终止（terminated）:表示该线程已经执行完毕。
+
+  
+
 ​				等待(wait, join)  唤醒（notify, notifyAll）
 
 
@@ -634,11 +858,15 @@ public class ThreadLocalTest {
 
 ## 死锁
 
+两个或者两个以上的线程在执行过程中，由于竞争资源或者彼此之间相互通信，而造成的阻塞现象，若无外力作用，他们讲无法进行下去，此时称系统处于死锁状态或者系统产生了死锁。
+
+**产生死锁的条件：**
+
 - 多个线程M>=2   争夺N>=2个资源 M>=N
 - 争夺资源的顺序不对
 - 未拿到全部资源，之前的资源不释放
 
-专业术语：
+**专业术语：**
 
 互斥条件：资源拿到后，只能独享
 
@@ -647,6 +875,24 @@ public class ThreadLocalTest {
 不剥夺：资源不能被剥夺 
 
 环路等待：1.拿到A  想拿B;	2.拿到B，想拿A
+
+**解决方案：**
+
+关键是保证拿锁的顺序一致
+
+1、内部通过比较，确定拿锁的顺序；
+
+2、采用尝试拿锁的机制；
+
+## 其他多线程问题
+
+- 活锁：两个线程在尝试拿锁的机制中，发生多个线程之间的谦让，不断发生同一个线程拿到同一把锁，在尝试那另外一把锁而拿不到，从而释放之前已经拿到的锁的过程。
+- 线程饥饿：优先级比较低的线程，总是拿不到锁。也不是说优先级比较低，有可能就有一个线程一直拿不到锁。
+
+## 可见性和原子性
+
+- 可见性--当多个线程访问同一个变量时，一个线程修改了这个变量的值，其他的线程能立刻看到修改的值；
+- 原子性--执行一个操作或多个操作的时候，要么全部都不执行，要么全部都执行，并且在执行的过程中不会被打断。
 
 ## CAS
 
@@ -657,3 +903,103 @@ ABA问题 ：加入版本控制
 开销问题： 如果实在是太大了，采用加锁方法
 
 只能保证一个共享变量的原子操作： 将多个共享变量组合成一个对象来使用
+
+## AQS
+
+```java
+/**
+ * AQS，采用了模板设计模式
+ * 类似ReentrantLock，但是不可重入锁
+ *
+ * @author Flany
+ * @since 2020/6/1
+ */
+public class AQSReentrantLock implements Lock {
+
+    private class AQSSync extends AbstractQueuedSynchronizer {
+        @Override
+        protected boolean tryAcquire(int arg) {
+            //原子操作，设置同步的状态
+            if (compareAndSetState(0, 1)) {
+                //设置当前线程为拿到锁的线程
+                setExclusiveOwnerThread(Thread.currentThread());
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        protected boolean tryRelease(int arg) {
+            if (getState() == 0) {
+                throw new RuntimeException("");
+            }
+            setExclusiveOwnerThread(null);
+            setState(0);
+            return true;
+        }
+    }
+
+    private AQSSync aqsSync = new AQSSync();
+
+    @Override
+    public void lock() {
+        System.out.println(Thread.currentThread().getName() + " --> 尝试拿锁");
+        //内部调用tryAcquire方法
+        aqsSync.acquire(1);
+        System.out.println(Thread.currentThread().getName() + " --> 已经拿到锁了");
+    }
+
+    @Override
+    public void lockInterruptibly() throws InterruptedException {
+
+    }
+
+    @Override
+    public boolean tryLock() {
+        return false;
+    }
+
+    @Override
+    public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
+        return false;
+    }
+
+    @Override
+    public void unlock() {
+        System.out.println(Thread.currentThread().getName() + " --> 尝试释放锁");
+        //内部调用tryRelease方法
+        aqsSync.release(1);
+        System.out.println(Thread.currentThread().getName() + " --> 已经释放锁了");
+    }
+
+    @Override
+    public Condition newCondition() {
+        return null;
+    }
+}
+```
+
+## CLH
+
+- 公平锁  链表 QNode(指向前一个节点，当前是否获取到锁的状态，Thread)   按顺序排队   自旋是有次数限制的，超过一定的次数后，将其放到阻塞队列中
+
+## Volatile
+
+**原理：**
+
+有volatile变量修饰的共享变量进行写操作的时候会使用CPU提供的Lock前缀指令。
+
+1、将当前处理器缓存行的数据写到系统内存中；
+
+2、这个写操作会使其他CPU里缓存了改内存地址的数据无效，所以在使用的时候，会重新去获取数据。
+
+- 保证可见性，抑制重排序（CPU指令，可能会重排序，在多线程中会出现问题，加上volatile关键字，可以预防这个问题）
+
+- 读和写是可以保证原子性的（get/set），但是做一些复合操作（count++），就不能保证原子性了
+
+- 使用场景：一个线程写，多个线程读
+
+## synchronized和Lock原理
+
+- synchronized：在jvm虚拟机中是通过monitorenter和monitorexit两个指令，来获取或者释放monitor对象的锁，synchronized不管是加static还是不加，都是通过锁对象，只是static锁的对象是类的class对象，不加static是锁的类的对象的实例。
+- Lock：
