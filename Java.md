@@ -1,10 +1,12 @@
 
 
-# 1、泛型
+# Java进阶知识
+
+## 1、泛型
 
 是一种参数化类型机制，编译时类型提前确认机制
 
-## 泛型的好处
+### 泛型的好处
 
 - 多种数据类型执行相同的代码；
 
@@ -12,13 +14,13 @@
 
 
 
-## 泛型的原理
+### 泛型的原理
 
 泛型时JDK1.5时才有的，虚拟机是不支持泛型的，为了向下兼容，采用泛型擦除来实现，是一种伪泛型机制，在编译后的字节码中是没有泛型信息的，其擦除为原始数据类型Object。
 
 
 
-## **泛型擦除机制**
+### **泛型擦除机制**
 
 - 获取目标的泛型，获取限定范围；
 
@@ -32,7 +34,7 @@
 
 
 
-## **泛型的局限性**
+### **泛型的局限性**
 
 - 不能被实例化；
 
@@ -48,7 +50,7 @@
 
 
 
-## **通配符**
+### **通配符**
 
 - List 						没有泛型，什么类型都可以
 
@@ -94,17 +96,17 @@ public void test() {
 }
 ```
 
-# 2、序列化
+## 2、序列化
 
 如网络传输数据，跨进程传输数据时，需要将对象或者数据结构进行序列化成二进制
 
-## 方案
+### 方案
 
 json, xml, protobuf
 
 如何选择：通用性、强壮性、可调式性、可读性、可扩展性、安全性
 
-## **Serializable**
+### **Serializable**
 
 里面大量使用反射操作，过程中会产生大量的临时对象，容易引起GC操作
 
@@ -149,11 +151,11 @@ public class Person implements Serializable {
 }
 ```
 
-## **Parcelable**
+### **Parcelable**
 
 底层是由parcel和binder实现的，android专有的，用于进程间通信
 
-## Externalizable
+### Externalizable
 
 ```java
 /**
@@ -243,9 +245,9 @@ public class Student implements Externalizable {
 
   
 
-# 3、注解、反射和动态代理
+## 3、注解、反射和动态代理
 
-## 注解
+### 注解
 
 - **SOURCE**
 
@@ -259,7 +261,7 @@ public class Student implements Externalizable {
 
   保留至运行期，反射
 
-##   APT
+###   APT
 
 在javac编译的时候，会采集所有的注解信息，javac主动调用注解处理器程序来处理，一般用于生成额外的辅助类
 
@@ -284,7 +286,7 @@ public class FlanyProcessor extends AbstractProcessor {
 }
 ```
 
-## 静态代理
+### 静态代理
 
 - 代理模式
 
@@ -331,7 +333,7 @@ public class FlanyProcessor extends AbstractProcessor {
   1. 如果有多个代理接口，就需要多个代理对象；
   2. 需要些很多重复的代码。
 
-## 动态代理
+### 动态代理
 
 一般的class流程 ->Java源文件--编译-->.class字节码--类加载-->class对象--实例化-->对象   在硬盘中
 
@@ -384,7 +386,7 @@ public static void proxy(final Activity activity) {
 
 
 
-## 注解的注解
+### 注解的注解
 
 ```java
 //定义一个用在注解上面的注解
@@ -454,20 +456,20 @@ public static void injectEvent(Activity activity) {
 }
 ```
 
-# 4、线程和进程
+## 4、线程和进程
 
-## 概念
+### 概念
 
 1. 进程是程序运行资源分配的最小单位；
 2. 线程是CPU调度的最小单位,必须依赖于进程而存在
 
-## 并行和并发
+### 并行和并发
 
 我们举个例子,如果有条高速公路A上面并排有8条车道,那么最大的并行车辆就是8辆此条高速公路A同时并排行走的车辆小于等于8辆的时候,车辆就可以并行运行。CPU也是这个原理,一个CPU相当于一个高速公路A,核心数或者线程数就相当于并排可以通行的车道;而多个CPU就相当于并排有多条高速公路,而每个高速公路并排有多个车道。 
 
 当谈论并发的时候一定要加个单位时间,也就是说单位时间内并发量是多少?离开了单位时间其实是没有意义的
 
-## **线程开启**
+### **线程开启**
 
 1.继承一个Thread，调用start方法；
 
@@ -523,7 +525,7 @@ thread3.start();
 String result = futureTask.get();
 ```
 
-## **线程的关闭**
+### **线程的关闭**
 
 - 线程的关闭是一种协作机制，发出信号，线程得知信号然后自己来终止；
 
@@ -534,7 +536,7 @@ String result = futureTask.get();
 - interrupt和isInterrupt方法，interrupt发出信号，告知线程可以停止了，线程通过isInterrupt方法得知信息，最后让run方法走完，自动停止；
 - 如果run中调用Thread.sleep()，会让取消interrupt发出的信号，并抛出一个异常，在try catch 可以调用Thread.currentThread().interrupt();再次发出中断信号。
 
-## 线程的顺序
+### 线程的顺序
 
 使用join方法，让该线程先执行完。
 
@@ -640,11 +642,11 @@ public class JoinTestThread {
 }
 ```
 
-## 守护线程
+### 守护线程
 
 
 
-## 锁的分类
+### 锁的分类
 
 - 悲观锁：synchronized ，先拿到锁，总有其他线程来改我的数值
 
@@ -763,7 +765,7 @@ public class JoinTestThread {
   }
   ```
 
-## ThreadLocal
+### ThreadLocal
 
 原理：Thread内部持有自己的ThreadLocalMap的数组对象，数组对象存放的是该TheadLocal对象和TheadLocal设置的属性值。(Handler内部有用的TheadLocal)
 
@@ -836,7 +838,7 @@ public class ThreadLocalTest {
 }
 ```
 
-## 线程的状态/线程的生命周期
+### 线程的状态/线程的生命周期
 
 - 初始化（new）：新建了一个线程，但是还没有调用start方法；
 
@@ -876,7 +878,7 @@ public class ThreadLocalTest {
 
 等待是主动进入，我没有获取到资源，主动进入等待状态。
 
-## 死锁
+### 死锁
 
 两个或者两个以上的线程在执行过程中，由于竞争资源或者彼此之间相互通信，而造成的阻塞现象，若无外力作用，他们讲无法进行下去，此时称系统处于死锁状态或者系统产生了死锁。
 
@@ -904,17 +906,17 @@ public class ThreadLocalTest {
 
 2、采用尝试拿锁的机制；
 
-## 其他多线程问题
+### 其他多线程问题
 
 - 活锁：两个线程在尝试拿锁的机制中，发生多个线程之间的谦让，不断发生同一个线程拿到同一把锁，在尝试那另外一把锁而拿不到，从而释放之前已经拿到的锁的过程。
 - 线程饥饿：优先级比较低的线程，总是拿不到锁。也不是说优先级比较低，有可能就有一个线程一直拿不到锁。
 
-## 可见性和原子性
+### 可见性和原子性
 
 - 可见性--当多个线程访问同一个变量时，一个线程修改了这个变量的值，其他的线程能立刻看到修改的值；
 - 原子性--执行一个操作或多个操作的时候，要么全部都不执行，要么全部都执行，并且在执行的过程中不会被打断。
 
-## CAS
+### CAS
 
 compare and swap  比较和交换   自旋   先计算 和预期的比较 如果和预期一样  就交换，如果不一样，就重新再来一次
 
@@ -924,7 +926,7 @@ ABA问题 ：加入版本控制
 
 只能保证一个共享变量的原子操作： 将多个共享变量组合成一个对象来使用
 
-## AQS
+### AQS
 
 ```java
 /**
@@ -999,11 +1001,11 @@ public class AQSReentrantLock implements Lock {
 }
 ```
 
-## CLH
+### CLH
 
 - 公平锁  链表 QNode(指向前一个节点，当前是否获取到锁的状态，Thread)   按顺序排队   自旋是有次数限制的，超过一定的次数后，将其放到阻塞队列中
 
-## Volatile
+### Volatile
 
 **原理：**
 
@@ -1019,7 +1021,7 @@ public class AQSReentrantLock implements Lock {
 
 - 使用场景：一个线程写，多个线程读
 
-## synchronized和Lock原理
+### synchronized和Lock原理
 
 - synchronized：在jvm虚拟机中是通过monitorenter和monitorexit两个指令，来获取或者释放monitor对象的锁，synchronized不管是加static还是不加，都是通过锁对象，只是static锁的对象是类的class对象，不加static是锁的类的对象的实例。
 - Lock：
