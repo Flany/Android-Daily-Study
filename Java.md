@@ -106,6 +106,8 @@ json, xml, protobuf
 
 ## **Serializable**
 
+里面大量使用反射操作，过程中会产生大量的临时对象，容易引起GC操作
+
 ```java
 public class Person implements Serializable {
     
@@ -148,6 +150,8 @@ public class Person implements Serializable {
 ```
 
 ## **Parcelable**
+
+底层是由parcel和binder实现的，android专有的，用于进程间通信
 
 ## Externalizable
 
@@ -222,6 +226,22 @@ public class Student implements Externalizable {
     }
 }
 ```
+
+- android中为什么使用bundle而不使用HashMap
+
+  bundle是由ArrayMap来存储数据的，里面有两个数组，一个int数组存储对象的下标，一个对象数组存储key和value，内部使用二分法对key进行排序，增删改查的时候使用的是二分法查找，只适合少量的数据；而HashMap内部是链表和数组，在数据量少的时候，占用内存比较大。bundle使用的场景都是数据量很少的地方，不能超过1M/4M，可以突破1M但是不能突破4M。并且Bundle是在跨进程通信，需要用到Parcelable，而HashMap则是使用Serializable，系统封装了一系列的方法供我们调用，使用方便简单。****
+
+- intent为什么不能使用对象而需要序列化
+
+  startActivity，activity的启动过程是和AMS通信实现的，APP进程和AMS进程是在不同的进程中，所以需要跨进程通信，则就需要序列化 
+
+- 序列化  持久化
+
+  序列化 是跨进程通信  网络传输时需要 
+
+  持久化是将数据存储起来
+
+  
 
 # 3、注解、反射和动态代理
 
